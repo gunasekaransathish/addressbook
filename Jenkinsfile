@@ -12,15 +12,37 @@ pipeline {
                echo "compiling teh code"
             }
         }
-        stage('UnitTest') {
+        stage('UnitTest') { // running on slave1
+            //agent {label 'linux_slave'}
+            agent any
             steps {
-               echo "Test teh code"
+                script{
+                    echo "RUNNING THE TC"
+                    sh "mvn test"
+                }
+                }
+            
+            post{
+                always{
+                    junit 'target/surefire-reports/*.xml'
+                }
             }
+            
         }
-        stage('Package') {
+        stage('Package') { // running on slave2 via ssh-agent
+            agent any
             steps {
-               echo "Package teh code"
+                script{
+                    sshagent(['slave2']) {
+                    echo "Packaging the code"
+                    sh "mvn package"
+
+                }
+                }
+                
             }
+
+            
         }
     }
 }
